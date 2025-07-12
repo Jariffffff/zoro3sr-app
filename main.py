@@ -1,6 +1,17 @@
 import streamlit as st
+import os
+import sys
+
+# Debug: show environment info
+st.write("📁 Current working directory:", os.getcwd())
+st.write("🐍 Python sys.path:", sys.path)
+
+# Optional: force scraper path (in case import still fails)
+sys.path.append("./scraper")
+
+# --- Main Imports ---
 from auth import login
-from scraper.base import scrape_all
+from base import scrape_all  # using base directly after sys.path.append
 from ui import show_dashboard
 # from google_export import export_to_gsheet  # Optional
 
@@ -13,7 +24,7 @@ if not st.session_state.authenticated:
 else:
     st.sidebar.success(f"✅ Logged in as {st.session_state.username} ({st.session_state.role})")
 
-    # --- Search controls ---
+    # --- Scraper UI ---
     st.sidebar.markdown("## 🔍 Product Scraper")
     source = st.sidebar.selectbox("🛒 E-commerce Site", ["daraz", "pickaboo", "rokomari"])
     query = st.sidebar.text_input("Search Term", value="headphones")
@@ -24,6 +35,7 @@ else:
             st.session_state.data = scrape_all(query=query, source=source, pages=pages)
             st.success(f"✅ Scraped from {source.title()}")
 
+    # --- Default scrape fallback ---
     if 'data' not in st.session_state:
         st.session_state.data = scrape_all(query="headphones", source="daraz", pages=1)
 
@@ -38,13 +50,15 @@ else:
         st.subheader(f"🛍 Products from {source.title()}")
         st.dataframe(st.session_state.data)
 
-        # Optional export buttons
+        # Export buttons
         st.download_button("⬇️ Download CSV", st.session_state.data.to_csv(index=False), "products.csv", "text/csv")
 
+        # Optional GSheet
         # if st.button("📤 Export to Google Sheets"):
         #     export_to_gsheet(st.session_state.data, "Zoro3srExport")
         #     st.success("✅ Exported to Google Sheets")
 
     elif page == "⚙️ Settings":
         st.info("More configuration options will be added soon.")
+
 
